@@ -20,6 +20,8 @@ const truckers = [{
   'pricePerVolume': 10
 }];
 
+
+
 //list of current shippings
 //useful for ALL steps
 //The `price` is updated from step 1 and 2
@@ -71,6 +73,9 @@ const deliveries = [{
     'convargo': 0
   }
 }];
+
+
+
 
 //list of actors for payment
 //useful from step 5
@@ -145,6 +150,63 @@ const actors = [{
   }]
 }];
 
-console.log(truckers);
-console.log(deliveries);
-console.log(actors);
+
+function found_truck_id(id_truck){
+  for(var i=0;i<truckers.length;i++){
+    var truck = truckers[i]
+    if(truck.id == id_truck){
+      return truck
+    }
+  }
+  return null // in case if the id isn't found
+}
+
+/*
+
+{
+  'id': '165d65ec-5e3f-488e-b371-d56ee100aa58',
+  'name': 'geodis',
+  'pricePerKm': 0.1,
+  'pricePerVolume': 8.5
+}
+
+*/
+
+
+
+
+function update_price(){
+  for(var i=0;i<deliveries.length;i++){
+    var deliverie = deliveries[i]
+    var truck_associated = found_truck_id(deliverie.truckerId)
+    if(truck_associated == null){
+      console.log("ERROR Truck not found")
+    }else{
+      // STEP 01
+      var pricePerKm = truck_associated.pricePerKm
+      var pricePerVolume = truck_associated.pricePerVolume
+      var distance = deliverie.distance
+      var volume = deliverie.volume
+      deliverie.price = pricePerKm*distance + pricePerVolume *volume
+    }
+  }
+  console.log(deliveries)
+}
+
+
+update_price()
+
+
+/*
+
+decreases by 10% after 5 m3
+decreases by 30% after 10 m3
+decreases by 50% after 25 m3
+
+*/
+
+
+
+/*function generate_json_shipper(){
+
+}*/
