@@ -215,7 +215,22 @@ function update_price(){
       commission.treasury = distance / 500 // 1 euro by 500Km range
       commission.convargo = commission_price - (commission.insurance+commission.treasury)// the rest
 
+      // STEP 04
+      if(deliverie.deductibleReduction){
+          price += volume
+      }
 
+      deliverie.price = price
+
+      /*
+
+      the shipper must pay the shipping price and the (optional) deductible reduction
+      the trucker receives the shipping price minus the commission
+      the insurance receives its part of the commission
+      the Treasury receives its part of the tax commission
+      convargo receives its part of the commission, plus the deductible reduction
+
+      */
 
     }
   }
