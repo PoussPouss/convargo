@@ -161,22 +161,22 @@ function found_truck_id(id_truck){
   return null // in case if the id isn't found
 }
 
-/*
-
-{
-  'id': '165d65ec-5e3f-488e-b371-d56ee100aa58',
-  'name': 'geodis',
-  'pricePerKm': 0.1,
-  'pricePerVolume': 8.5
-}
-
-*/
-
 
 // be careful
 function calculate_percent(value,percent){
   return value/100*percent
 }
+
+/*
+
+insurance: half of commission
+the Treasury: 1€ by 500km range
+convargo: the rest
+
+*/
+
+
+
 
 
 
@@ -205,9 +205,15 @@ function update_price(){
       }
 
       console.log("Discount:"+discount)
+      price -= discount
 
-      deliverie.price = price - discount
+      // STEP 03
+      var commission = deliverie.commission
+      var commission_price = calculate_percent(price,30) // 30% price
 
+      commission.insurance = commission_price / 2 // half of commission
+      commission.treasury = distance / 500 // 1 euro by 500Km range
+      commission.convargo = commission_price - (commission.insurance+commission.treasury)// the rest
 
 
 
@@ -218,18 +224,3 @@ function update_price(){
 
 
 update_price()
-
-
-/*
-
-decreases by 10% after 5 m3
-decreases by 30% after 10 m3
-decreases by 50% after 25 m3
-
-*/
-
-
-
-/*function generate_json_shipper(){
-
-}*/
