@@ -79,7 +79,8 @@ const deliveries = [{
 
 //list of actors for payment
 //useful from step 5
-const actors = [{
+const actors =
+[{
   'deliveryId': 'bba9500c-fd9e-453f-abf1-4cd8f52af377',
   'payment': [{
     'who': 'shipper',
@@ -151,10 +152,10 @@ const actors = [{
 }];
 
 
-function found_truck_id(id_truck){
-  for(var i=0;i<truckers.length;i++){
+function findTruckByID(idTruck) {
+  for (var i = 0; i < truckers.length; i++) {
     var truck = truckers[i]
-    if(truck.id == id_truck){
+    if (truck.id == idTruck) {
       return truck
     }
   }
@@ -163,79 +164,128 @@ function found_truck_id(id_truck){
 
 
 // be careful
-function calculate_percent(value,percent){
-  return value/100*percent
+function calculatePercent(value, percent) {
+  return value / 100 * percent
 }
 
-/*
+// Follows conditions of the step 01 for calculing the price
+function calculatePrice(delivery,truck){
+  var pricePerKm = truck.pricePerKm
+  var pricePerVolume = truck.pricePerVolume
+  var distance = delivery.distance
+  var volume = delivery.volume
+  var price = pricePerKm * distance + pricePerVolume * volume
+  delivery.price = price
+}
 
-insurance: half of commission
-the Treasury: 1€ by 500km range
-convargo: the rest
+// Follows conditions of the step 2 for subsrtracting the discount in terms of the volumes
+function calculateDiscount(delivery,truck){
+  var discount = 0
+  var volume = delivery.volume
+  var pricePerVolume = truck.pricePerVolume
+  if (volume > 25) {
+    discount = calculatePercent(pricePerVolume * volume, 50)
+  } else if (volume > 10) {
+    discount = calculatePercent(pricePerVolume * volume, 30)
+  } else if (volume > 5) {
+    discount = calculatePercent(pricePerVolume * volume, 10)
+  }
+  delivery.price -= discount
+}
 
-*/
+// Follows conditions of the step 3 for adding commission
+function calculateCommission(delivery){
+  var price = delivery.price
+  var commission = delivery.commission
+  var commissionPrice = calculatePercent(price, 30) // 30% price
+  var distance = delivery.distance
 
+  commission.insurance = commissionPrice / 2 // half of commission
+  commission.treasury = distance / 500 // 1 euro by 500Km range
+  commission.convargo = commissionPrice - (commission.insurance + commission.treasury) // the rest
+}
 
+function calculateReduction(delivery){
+  if (delivery.deductibleReduction) {
+    delivery+= volume
+  }
+}
 
-
-
-
-function update_price(){
-  for(var i=0;i<deliveries.length;i++){
-    var deliverie = deliveries[i]
-    var truck_associated = found_truck_id(deliverie.truckerId)
-    if(truck_associated == null){
-      console.log("ERROR Truck not found")
-    }else{
+// Allows to update the delivery price for each delivery
+function updatePrice() {
+  for (var i in deliveries) {
+    var delivery = deliveries[i]
+    var truckAssociated = findTruckByID(delivery.truckerId)
+    if (truckAssociated == null){
       // STEP 01
-      var pricePerKm = truck_associated.pricePerKm
-      var pricePerVolume = truck_associated.pricePerVolume
-      var distance = deliverie.distance
-      var volume = deliverie.volume
-      var price = pricePerKm*distance + pricePerVolume *volume
+      calculatePrice(delivery,truckAssociated)
 
       // STEP 02
-      var discount = 0
-      if(volume > 25){
-        discount = calculate_percent(pricePerVolume*volume,50)
-      }else if (volume > 10) {
-        discount = calculate_percent(pricePerVolume*volume,30)
-      }else if(volume > 5){
-        discount = calculate_percent(pricePerVolume*volume,10)
-      }
-
-      console.log("Discount:"+discount)
-      price -= discount
+      calculateDiscount(delivery,truckAssociated)
 
       // STEP 03
-      var commission = deliverie.commission
-      var commission_price = calculate_percent(price,30) // 30% price
-
-      commission.insurance = commission_price / 2 // half of commission
-      commission.treasury = distance / 500 // 1 euro by 500Km range
-      commission.convargo = commission_price - (commission.insurance+commission.treasury)// the rest
+      calculateCommission(delivery)
 
       // STEP 04
-      if(deliverie.deductibleReduction){
-          price += volume
-      }
-
-      deliverie.price = price
-
-      /*
-
-      the shipper must pay the shipping price and the (optional) deductible reduction
-      the trucker receives the shipping price minus the commission
-      the insurance receives its part of the commission
-      the Treasury receives its part of the tax commission
-      convargo receives its part of the commission, plus the deductible reduction
-
-      */
-
+      calculateReduction(delivery)
+    }else{
+      // In case where the object doesn't exist
+      console.log("ERROR - Truck not found")
     }
   }
   console.log(deliveries)
 }
 
+// Returns the "delivery" in terms of the id passed in parameter
+function findDeliveryByID(idDelivery) {
+  for (var i in deliveries) {
+    var delivery = deliveries[i]
+    if (delivery.id == idDelivery) {
+      return delivery
+    }
+  }
+  return null // in case if the id isn't found
+}
 
-update_price()
+// Attributes payments between delevry and actor of this delivery
+function attributatePaymentPeople(actor, delivery) {
+  for (var i in actor.payment) {
+    var people = actor.payment[i]
+    // Each people receives or pays an amount differents
+    switch (people.who) {
+      case "shipper":
+        people.amount = delivery.price
+        break;
+      case "trucker":
+        people.amount = delivery.price - calculatePercent(delivery.price, 30)
+        break;
+      case "insurance":
+        people.amount = delivery.commission.insurance
+        break;
+      case "treasury":
+        people.amount = delivery.commission.treasury
+        break;
+      case "convargo":
+        people.amount = delivery.commission.convargo
+        break;
+    }
+  }
+}
+
+// Allows to update the payment
+function updatePayment() {
+  for (var i in actors) {
+    var actor = actors[i]
+    var delivery = findDeliveryByID(actor.deliveryId)
+    if (delivery != null) {
+      attributatePaymentPeople(actor, delivery)
+    } else {
+      console.log("ERROR - delivery not found")
+    }
+  }
+
+}
+
+
+updatePrice()
+updatePayment()
