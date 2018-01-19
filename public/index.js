@@ -173,6 +173,11 @@ function found_truck_id(id_truck){
 */
 
 
+// be careful
+function calculate_percent(value,percent){
+  return value/100*percent
+}
+
 
 
 function update_price(){
@@ -187,7 +192,25 @@ function update_price(){
       var pricePerVolume = truck_associated.pricePerVolume
       var distance = deliverie.distance
       var volume = deliverie.volume
-      deliverie.price = pricePerKm*distance + pricePerVolume *volume
+      var price = pricePerKm*distance + pricePerVolume *volume
+
+      // STEP 02
+      var discount = 0
+      if(volume > 25){
+        discount = calculate_percent(pricePerVolume*volume,50)
+      }else if (volume > 10) {
+        discount = calculate_percent(pricePerVolume*volume,30)
+      }else if(volume > 5){
+        discount = calculate_percent(pricePerVolume*volume,10)
+      }
+
+      console.log("Discount:"+discount)
+
+      deliverie.price = price - discount
+
+
+
+
     }
   }
   console.log(deliveries)
