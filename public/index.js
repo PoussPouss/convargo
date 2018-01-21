@@ -201,7 +201,7 @@ function calculateCommission(delivery){
   var distance = delivery.distance
 
   commission.insurance = commissionPrice / 2 // half of commission
-  commission.treasury = distance / 500 // 1 euro by 500Km range
+  commission.treasury = Math.ceil(distance / 500) // 1 euro by 500Km range
   commission.convargo = commissionPrice - (commission.insurance + commission.treasury) // the rest
 }
 
@@ -258,6 +258,9 @@ function attributatePaymentPeople(actor, delivery) {
         break;
       case "trucker":
         people.amount = delivery.price - calculatePercent(delivery.price, 30)
+        if(delivery.deductibleReduction){
+          people.amount -= volume // corresponding at the reduction
+        }
         break;
       case "insurance":
         people.amount = delivery.commission.insurance
